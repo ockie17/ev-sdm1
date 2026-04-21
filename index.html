@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Evaluasi Multi-Dimensi SDM</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<!-- Export libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+:root {
+  --bg:#fff; --bg2:#f5f5f3; --bg3:#eeedea;
+  --text:#1a1a1a; --text2:#666; --text3:#aaa;
+  --border:rgba(0,0,0,0.12); --border2:rgba(0,0,0,0.22);
+  --radius:8px; --radius-lg:12px;
+  --green-bg:#EAF3DE; --green-txt:#3B6D11;
+  --amber-bg:#FAEEDA; --amber-txt:#854F0B;
+  --coral-bg:#FAECE7; --coral-txt:#993C1D;
+  --red-bg:#FCEBEB;   --red-txt:#A32D2D;
+  --blue-bg:#E6F1FB;  --blue-txt:#0C447C;
+  --purple-bg:#EEEDFE;--purple-txt:#3C3489;
+  --teal-bg:#E1F5EE;  --teal-txt:#085041;
+  --primary:#1D9E75;  --primary-dark:#0F6E56;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1a; --bg2:#242422; --bg3:#2c2c2a;
+    --text:#f0ede8; --text2:#aaa; --text3:#555;
+    --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.2);
+    --green-bg:#27500A; --green-txt:#C0DD97;
+    --amber-bg:#633806; --amber-txt:#FAC775;
+    --coral-bg:#712B13; --coral-txt:#F5C4B3;
+    --red-bg:#791F1F;   --red-txt:#F7C1C1;
+    --blue-bg:#0C447C;  --blue-txt:#B5D4F4;
+    --purple-bg:#3C3489;--purple-txt:#CECBF6;
+    --teal-bg:#085041;  --teal-txt:#9FE1CB;
+  }
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg2);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+
+/* ── Setup overlay ── */
+#setup-overlay{position:fixed;inset:0;background:var(--bg2);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;}
+.setup-card{background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius-lg);padding:32px;max-width:520px;width:100%;}
+.setup-card h2{font-size:20px;font-weight:500;margin-bottom:6px;}
+.setup-card p{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.7;}
+.setup-steps{counter-reset:step;margin-bottom:20px;}
+.setup-step{counter-increment:step;display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.step-body{font-size:13px;color:var(--text);}
+.step-body code{background:var(--bg3);padding:2px 6px;border-radius:4px;font-size:12px;font-family:monospace;}
+.step-link{color:var(--primary);text-decoration:none;font-weight:500;}
+.step-link:hover{text-decoration:underline;}
+.field-group{margin-bottom:12px;}
+.field-group label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;}
+.field-group input{width:100%;height:36px;border:0.5px solid var(--border2);border-radius:var(--radius);padding:0 10px;font-size:13px;background:var(--bg);color:var(--text);}
+.field-group input:focus{outline:none;box-shadow:0 0 0 2px #1D9E7544;}
+.btn-primary{width:100%;height:38px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:500;cursor:pointer;}
+.btn-primary:hover{background:var(--primary-dark);}
+.setup-error{font-size:12px;color:var(--red-txt);margin-top:8px;display:none;}
+
+/* ── Header ── */
+.header{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;gap:12px;}
+.header-left h1{font-size:15px;font-weight:500;}
+.header-left p{font-size:11px;color:var(--text2);}
+.header-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#aaa;flex-shrink:0;}
+.status-dot.online{background:var(--primary);}
+.status-label{font-size:11px;color:var(--text2);}
+
+/* ── Layout ── */
+.container{max-width:1140px;margin:0 auto;padding:20px 16px;}
+.two-col{display:grid;grid-template-columns:270px 1fr;gap:16px;align-items:start;}
+@media(max-width:740px){.two-col{grid-template-columns:1fr;}}
+
+/* ── Cards ── */
+.card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:14px;}
+.card-title{font-size:11px;font-weight:500;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;}
+
+/* ── Forms ── */
+label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;}
+input[type=text],select,textarea{width:100%;border:0.5px solid var(--border2);border-radius:var(--radius);padding:0 10px;font-size:13px;background:var(--bg);color:var(--text);margin-bottom:10px;}
+input[type=text]{height:34px;}
+select{height:34px;}
+textarea{padding:8px 10px;resize:vertical;line-height:1.5;}
+input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 0 2px #1D9E7544;}
+button{height:34px;padding:0 14px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);cursor:pointer;white-space:nowrap;transition:background .15s;}
+button:hover{background:var(--bg3);}
+button.btn-green{background:var(--primary);color:#fff;border-color:var(--primary);}
+button.btn-green:hover{background:var(--primary-dark);}
+button.btn-del{color:var(--red-txt);border-color:transparent;}
+button.btn-del:hover{background:var(--red-bg);}
+
+/* ── Metrics ── */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+@media(max-width:600px){.metrics{grid-template-columns:repeat(2,1fr);}}
+.metric{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+.metric .lbl{font-size:11px;color:var(--text2);margin-bottom:4px;}
+.metric .val{font-size:22px;font-weight:500;}
+
+/* ── Employee chips ── */
+.emp-chip{display:flex;align-items:center;gap:8px;padding:7px 10px;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;margin-bottom:6px;background:var(--bg);transition:background .15s;}
+.emp-chip:hover{background:var(--bg2);}
+.emp-chip.active{background:var(--bg3);border-color:var(--border2);font-weight:500;}
+.emp-avatar{width:28px;height:28px;border-radius:50%;background:var(--blue-bg);color:var(--blue-txt);font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.emp-info{flex:1;min-width:0;}
+.emp-name{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.emp-dept{font-size:11px;color:var(--text2);}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;}
+.tab{padding:4px 10px;font-size:12px;border:0.5px solid var(--border);border-radius:var(--radius);cursor:pointer;background:var(--bg);color:var(--text2);}
+.tab.active{background:var(--bg3);color:var(--text);font-weight:500;border-color:var(--border2);}
+
+/* ── Indicator table ── */
+.ind-table{width:100%;border-collapse:collapse;}
+.ind-table th{font-size:11px;color:var(--text2);font-weight:500;padding:6px 10px;text-align:left;border-bottom:0.5px solid var(--border);background:var(--bg2);}
+.ind-table td{padding:8px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle;}
+.ind-table tr:last-child td{border-bottom:none;}
+.ind-label{font-size:13px;}
+.ind-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+.method-pill{display:inline-block;font-size:11px;background:var(--bg2);color:var(--text2);padding:2px 8px;border-radius:var(--radius);}
+.score-sel{width:46px;height:28px;text-align:center;padding:0;font-size:13px;font-weight:500;margin-bottom:0;}
+
+/* ── Progress bar ── */
+.dim-footer{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:10px;border-top:0.5px solid var(--border);}
+.progress{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;transition:width .3s;}
+
+/* ── Result ── */
+.result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:12px;}
+.res-card{background:var(--bg2);border-radius:var(--radius);padding:10px 12px;}
+.res-dim{font-size:11px;color:var(--text2);margin-bottom:2px;}
+.res-score{font-size:18px;font-weight:500;}
+.res-bar{height:4px;border-radius:2px;margin-top:6px;background:var(--bg3);overflow:hidden;}
+.res-bar-fill{height:100%;border-radius:2px;}
+.final-box{display:flex;align-items:center;gap:16px;padding:16px 18px;background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius-lg);margin-bottom:12px;}
+.final-score{font-size:42px;font-weight:500;line-height:1;}
+
+/* ── Radar ── */
+.radar-wrap{display:grid;grid-template-columns:repeat(2,1fr);gap:5px;}
+@media(max-width:500px){.radar-wrap{grid-template-columns:1fr;}}
+.radar-row{display:flex;align-items:center;gap:6px;}
+.radar-label{width:100px;font-size:11px;color:var(--text2);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.radar-bar{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.radar-fill{height:100%;border-radius:3px;}
+.radar-val{width:26px;text-align:right;font-size:11px;font-weight:500;color:var(--text2);}
+
+/* ── Activity log ── */
+.log-item{display:flex;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--border);font-size:12px;}
+.log-item:last-child{border-bottom:none;}
+.log-time{color:var(--text3);white-space:nowrap;flex-shrink:0;}
+.log-msg{color:var(--text2);}
+.log-msg strong{color:var(--text);font-weight:500;}
+
+/* ── Badges ── */
+.badge{display:inline-block;padding:3px 10px;border-radius:var(--radius);font-size:12px;font-weight:500;}
+.b-green{background:var(--green-bg);color:var(--green-txt);}
+.b-amber{background:var(--amber-bg);color:var(--amber-txt);}
+.b-coral{background:var(--coral-bg);color:var(--coral-txt);}
+.b-red{background:var(--red-bg);color:var(--red-txt);}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:var(--bg);padding:10px 18px;border-radius:var(--radius-lg);font-size:13px;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;z-index:9998;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+/* ── Loading ── */
+.loading{display:flex;align-items:center;justify-content:center;height:120px;gap:10px;color:var(--text2);font-size:13px;}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.no-sel{display:flex;align-items:center;justify-content:center;height:300px;color:var(--text2);font-size:13px;text-align:center;flex-direction:column;gap:8px;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SETUP OVERLAY ══════════════ -->
+<div id="setup-overlay">
+  <div class="setup-card">
+    <h2>Konfigurasi Firebase</h2>
+    <p>Masukkan konfigurasi Firebase project Anda. Data evaluasi akan tersimpan di Realtime Database dan dapat diakses oleh semua pengguna secara realtime.</p>
+
+    <div class="setup-steps">
+      <div class="setup-step">
+        <div class="step-num">1</div>
+        <div class="step-body">Buka <a class="step-link" href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → klik <strong>Add project</strong> → beri nama project → klik Continue hingga selesai.</div>
+      </div>
+      <div class="setup-step">
+        <div class="step-num">2</div>
+        <div class="step-body">Di sidebar kiri klik <strong>Build → Realtime Database</strong> → klik <strong>Create Database</strong> → pilih lokasi → pilih <strong>Start in test mode</strong> → Enable.</div>
+      </div>
+      <div class="setup-step">
+        <div class="step-num">3</div>
+        <div class="step-body">Klik ikon roda gigi (⚙️) → <strong>Project settings</strong> → scroll ke bawah → klik ikon <code>&lt;/&gt;</code> → Register app → salin nilai dari <code>firebaseConfig</code>.</div>
+      </div>
+      <div class="setup-step">
+        <div class="step-num">4</div>
+        <div class="step-body">Tempelkan nilai konfigurasi ke kolom di bawah ini, lalu klik Simpan & Mulai.</div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label>API Key</label>
+      <input type="text" id="cfg-apiKey" placeholder="AIzaSy..."/>
+    </div>
+    <div class="field-group">
+      <label>Auth Domain</label>
+      <input type="text" id="cfg-authDomain" placeholder="yourproject.firebaseapp.com"/>
+    </div>
+    <div class="field-group">
+      <label>Database URL</label>
+      <input type="text" id="cfg-dbUrl" placeholder="https://yourproject-default-rtdb.firebaseio.com"/>
+    </div>
+    <div class="field-group">
+      <label>Project ID</label>
+      <input type="text" id="cfg-projectId" placeholder="yourproject"/>
+    </div>
+    <div class="field-group">
+      <label>App ID</label>
+      <input type="text" id="cfg-appId" placeholder="1:123456789:web:abc123"/>
+    </div>
+    <div id="cfg-error" class="setup-error">Gagal terhubung ke Firebase. Periksa kembali konfigurasi Anda.</div>
+    <button class="btn-primary" onclick="initFirebase()">Simpan & Mulai &#8594;</button>
+    <p style="font-size:11px;color:var(--text3);margin-top:12px;text-align:center;">Konfigurasi disimpan di browser (localStorage) sehingga tidak perlu diisi ulang.</p>
+  </div>
+</div>
+
+<!-- ══════════════ HEADER ══════════════ -->
+<div class="header">
+  <div class="header-left">
+    <h1>Evaluasi Multi-Dimensi SDM</h1>
+    <p>Data tersinkron realtime via Firebase</p>
+  </div>
+  <div class="header-right">
+    <div class="status-dot" id="status-dot"></div>
+    <span class="status-label" id="status-label">Menghubungkan...</span>
+    <button onclick="exportExcel()">&#8595; Excel</button>
+    <button onclick="exportPDF()">&#8595; PDF</button>
+    <button onclick="resetConfig()" style="font-size:11px;color:var(--text3)">&#9881; Firebase</button>
+  </div>
+</div>
+
+<!-- ══════════════ MAIN APP ══════════════ -->
+<div class="container">
+
+  <div class="metrics">
+    <div class="metric"><div class="lbl">Total karyawan</div><div class="val" id="m-total">—</div></div>
+    <div class="metric"><div class="lbl">Rata-rata skor</div><div class="val" id="m-avg">—</div></div>
+    <div class="metric"><div class="lbl" style="color:var(--green-txt)">Aman (&ge;3.5)</div><div class="val" style="color:var(--green-txt)" id="m-safe">—</div></div>
+    <div class="metric"><div class="lbl" style="color:var(--red-txt)">Risiko/Kritis (&lt;2.5)</div><div class="val" style="color:var(--red-txt)" id="m-risk">—</div></div>
+  </div>
+
+  <div class="two-col">
+
+    <!-- LEFT -->
+    <div>
+      <div class="card">
+        <div class="card-title">Tambah karyawan</div>
+        <label>Nama</label>
+        <input type="text" id="inp-name" placeholder="Nama karyawan"/>
+        <label>Jabatan</label>
+        <input type="text" id="inp-pos" placeholder="Manager, Staff, dll."/>
+        <label>Departemen</label>
+        <input type="text" id="inp-dept" placeholder="Departemen"/>
+        <button class="btn-green" style="width:100%" onclick="addEmp()">+ Tambah Karyawan</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Daftar karyawan (<span id="emp-count">0</span>)</div>
+        <div id="emp-list">
+          <div class="loading"><div class="spinner"></div>Memuat data...</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Aktivitas terbaru</div>
+        <div id="activity-log">
+          <div style="font-size:12px;color:var(--text3);text-align:center;padding:12px 0;">Belum ada aktivitas</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div id="eval-panel">
+      <div class="no-sel" id="no-sel-msg">
+        <div style="font-size:28px;">&#128100;</div>
+        <div>Pilih atau tambahkan karyawan<br>untuk memulai evaluasi</div>
+      </div>
+      <div id="eval-content" style="display:none"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════ SCRIPT ══════════════ -->
+<script>
+/* ── Dimensions config ── */
+const DIMS = [
+  {id:'perf',   label:'Performa Kerja',       weight:.20, color:'#378ADD',
+   indicators:[
+    {label:'Pencapaian KPI / target',      sub:'% target tercapai dalam periode',      method:'Kuantitatif'},
+    {label:'Kualitas output',              sub:'Akurasi, kerapian, standar kerja',     method:'Observasi'},
+    {label:'Produktivitas harian',         sub:'Volume pekerjaan vs waktu',            method:'Sistem'},
+    {label:'Konsistensi performa',         sub:'Stabilitas hasil selama periode',      method:'Review'},
+  ]},
+  {id:'komp',   label:'Kompetensi',            weight:.15, color:'#534AB7',
+   indicators:[
+    {label:'Hard skill / teknis',          sub:'Penguasaan tools dan keahlian utama',  method:'Uji/Observasi'},
+    {label:'Soft skill',                   sub:'Komunikasi, problem-solving, adaptasi',method:'360° feedback'},
+    {label:'Pengetahuan produk / bisnis',  sub:'Pemahaman domain kerja',               method:'Wawancara'},
+    {label:'Digital literacy',             sub:'Kemampuan adopsi teknologi baru',      method:'Tes/Observasi'},
+  ]},
+  {id:'kontrib',label:'Kontribusi Tim',         weight:.15, color:'#1D9E75',
+   indicators:[
+    {label:'Kerja sama tim',               sub:'Kolaborasi dan saling dukung',         method:'360° feedback'},
+    {label:'Inisiatif',                    sub:'Proaktif tanpa instruksi',             method:'Observasi'},
+    {label:'Berbagi pengetahuan',          sub:'Mentoring, dokumentasi, sharing',      method:'Peer review'},
+    {label:'Kontribusi inovasi',           sub:'Ide perbaikan proses atau produk',     method:'Rekam jejak'},
+  ]},
+  {id:'disip',  label:'Kedisiplinan',           weight:.15, color:'#D85A30',
+   indicators:[
+    {label:'Kehadiran & ketepatan waktu',  sub:'% kehadiran dan on-time',              method:'Sistem absensi'},
+    {label:'Kepatuhan SOP',               sub:'Mengikuti prosedur yang berlaku',      method:'Audit'},
+    {label:'Penyelesaian tepat waktu',    sub:'Deadline terpenuhi',                   method:'Project tracker'},
+    {label:'Catatan pelanggaran',         sub:'Jumlah dan bobot pelanggaran',         method:'HR record'},
+  ]},
+  {id:'pot',    label:'Potensi',                weight:.15, color:'#BA7517',
+   indicators:[
+    {label:'Learning agility',            sub:'Kecepatan belajar hal baru',            method:'Observasi'},
+    {label:'Kepemimpinan',               sub:'Potensi memimpin tim',                 method:'360°/Assessment'},
+    {label:'Ambisi & motivasi',           sub:'Drive untuk berkembang',               method:'Wawancara'},
+    {label:'Adaptabilitas',              sub:'Fleksibel terhadap perubahan',          method:'Observasi'},
+  ]},
+  {id:'cost',   label:'Biaya & Nilai',          weight:.10, color:'#888780',
+   indicators:[
+    {label:'Cost-to-value ratio',         sub:'Gaji vs kontribusi nyata',             method:'Kalkulasi'},
+    {label:'Revenue contribution',        sub:'Dampak langsung ke pendapatan',        method:'Sistem'},
+    {label:'Efisiensi sumber daya',       sub:'Penggunaan anggaran tim',             method:'Laporan'},
+  ]},
+  {id:'senior', label:'Senioritas & Loyalitas', weight:.10, color:'#D4537E',
+   indicators:[
+    {label:'Masa kerja',                  sub:'Lama bergabung di perusahaan',         method:'HR record'},
+    {label:'Retensi pengetahuan',         sub:'Pemegang knowledge kritis',           method:'Assessment'},
+    {label:'Loyalitas & engagement',      sub:'Kepuasan dan komitmen kerja',         method:'Survey'},
+  ]},
+];
+
+const SCORE_OPTS = [
+  {v:0,l:'— Belum'},{v:1,l:'1 – Sangat buruk'},{v:2,l:'2 – Buruk'},
+  {v:3,l:'3 – Cukup'},{v:4,l:'4 – Baik'},{v:5,l:'5 – Sangat baik'}
+];
+
+/* ── State ── */
+let db = null;
+let employees = {};
+let activeId = null;
+let activeDim = 0;
+let activityLog = [];
+
+/* ── Firebase init ── */
+function initFirebase() {
+  const cfg = {
+    apiKey:      document.getElementById('cfg-apiKey').value.trim(),
+    authDomain:  document.getElementById('cfg-authDomain').value.trim(),
+    databaseURL: document.getElementById('cfg-dbUrl').value.trim(),
+    projectId:   document.getElementById('cfg-projectId').value.trim(),
+    appId:       document.getElementById('cfg-appId').value.trim(),
+  };
+  const missing = Object.entries(cfg).filter(([,v])=>!v);
+  if (missing.length) { showCfgError('Semua field wajib diisi.'); return; }
+
+  try {
+    if (firebase.apps.length) firebase.apps.forEach(a=>a.delete());
+    firebase.initializeApp(cfg);
+    db = firebase.database();
+
+    db.ref('.info/connected').on('value', snap => {
+      const online = snap.val() === true;
+      document.getElementById('status-dot').className = 'status-dot' + (online?' online':'');
+      document.getElementById('status-label').textContent = online ? 'Terhubung' : 'Offline';
+    });
+
+    localStorage.setItem('fb_cfg', JSON.stringify(cfg));
+    document.getElementById('setup-overlay').style.display = 'none';
+    startListeners();
+  } catch(e) {
+    showCfgError('Gagal menginisialisasi Firebase: ' + e.message);
+  }
+}
+
+function showCfgError(msg) {
+  const el = document.getElementById('cfg-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+function resetConfig() {
+  if (!confirm('Reset konfigurasi Firebase? Anda perlu memasukkan ulang config.')) return;
+  localStorage.removeItem('fb_cfg');
+  location.reload();
+}
+
+/* ── Firebase listeners ── */
+function startListeners() {
+  const empRef = db.ref('employees');
+  empRef.on('value', snap => {
+    employees = snap.val() || {};
+    renderEmpList();
+    updateMetrics();
+    if (activeId && employees[activeId]) renderEval();
+    else if (activeId && !employees[activeId]) {
+      activeId = null;
+      document.getElementById('no-sel-msg').style.display = 'flex';
+      document.getElementById('eval-content').style.display = 'none';
+    }
+  });
+
+  const logRef = db.ref('activity').limitToLast(20);
+  logRef.on('value', snap => {
+    const data = snap.val() || {};
+    activityLog = Object.values(data).sort((a,b) => b.ts - a.ts);
+    renderActivityLog();
+  });
+}
+
+/* ── Helpers ── */
+function initScores() {
+  const s = {};
+  DIMS.forEach(d => { s[d.id] = {}; d.indicators.forEach((_,i) => s[d.id][i] = 0); });
+  return s;
+}
+function initials(n) { return n.trim().split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+function calcDim(emp, d) {
+  const s = emp.scores?.[d.id] || {};
+  const vals = Object.values(s).filter(v=>v>0);
+  return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+}
+function calcTotal(emp) {
+  let t=0, w=0;
+  DIMS.forEach(d => { const s=calcDim(emp,d); if(s>0){t+=s*d.weight;w+=d.weight;} });
+  return w>0 ? t/w : 0;
+}
+function getStatus(s) {
+  if (!s) return {label:'Belum dinilai', cls:'', color:'var(--text3)'};
+  if (s>=4)  return {label:'Aman',      cls:'b-green', color:'var(--green-txt)'};
+  if (s>=3)  return {label:'Perhatian', cls:'b-amber', color:'var(--amber-txt)'};
+  if (s>=2)  return {label:'Risiko',    cls:'b-coral', color:'var(--coral-txt)'};
+  return             {label:'Kritis',   cls:'b-red',   color:'var(--red-txt)'};
+}
+function scoreTag(v) {
+  if (!v) return `<span style="color:var(--text3);font-size:12px">—</span>`;
+  const cls = v>=4?'b-green':v===3?'b-amber':v===2?'b-coral':'b-red';
+  return `<span class="badge ${cls}">${v}</span>`;
+}
+function fmtTs(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'}) + ' ' +
+         d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+}
+function logActivity(msg) {
+  if (!db) return;
+  db.ref('activity').push({ msg, ts: Date.now() });
+}
+
+/* ── CRUD ── */
+function addEmp() {
+  if (!db) { showToast('Firebase belum terhubung'); return; }
+  const name = document.getElementById('inp-name').value.trim();
+  const pos  = document.getElementById('inp-pos').value.trim();
+  const dept = document.getElementById('inp-dept').value.trim();
+  if (!name) { document.getElementById('inp-name').focus(); return; }
+  const ref = db.ref('employees').push();
+  const emp = { id: ref.key, name, pos: pos||'—', dept: dept||'—', scores: initScores(), note: '', createdAt: Date.now() };
+  ref.set(emp).then(() => {
+    logActivity(`Karyawan <strong>${name}</strong> ditambahkan`);
+    showToast(`${name} ditambahkan`);
+    document.getElementById('inp-name').value = '';
+    document.getElementById('inp-pos').value = '';
+    document.getElementById('inp-dept').value = '';
+    selectEmp(ref.key);
+  });
+}
+
+function removeEmp(id) {
+  if (!confirm('Hapus karyawan ini? Data akan terhapus permanen dari database.')) return;
+  const name = employees[id]?.name || 'Karyawan';
+  db.ref(`employees/${id}`).remove().then(() => {
+    logActivity(`Karyawan <strong>${name}</strong> dihapus`);
+    showToast(`${name} dihapus`);
+  });
+}
+
+function setScore(dimId, idx, val) {
+  if (!activeId || !db) return;
+  db.ref(`employees/${activeId}/scores/${dimId}/${idx}`).set(parseInt(val));
+}
+
+function saveNote() {
+  if (!activeId || !db) return;
+  const note = document.getElementById('note-area')?.value || '';
+  db.ref(`employees/${activeId}/note`).set(note).then(() => showToast('Catatan disimpan'));
+}
+
+function selectEmp(id) {
+  activeId = id; activeDim = 0;
+  renderEmpList();
+  document.getElementById('no-sel-msg').style.display = 'none';
+  document.getElementById('eval-content').style.display = 'block';
+  renderEval();
+}
+
+function switchDim(i) { activeDim = i; renderEval(); }
+
+/* ── Render ── */
+function renderEmpList() {
+  const el = document.getElementById('emp-list');
+  const list = Object.values(employees).sort((a,b) => a.createdAt - b.createdAt);
+  document.getElementById('emp-count').textContent = list.length;
+  if (!list.length) {
+    el.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3);font-size:12px">Belum ada karyawan</div>';
+    return;
+  }
+  el.innerHTML = list.map(e => {
+    const s = calcTotal(e); const st = getStatus(s);
+    return `<div class="emp-chip ${e.id===activeId?'active':''}" onclick="selectEmp('${e.id}')">
+      <div class="emp-avatar">${initials(e.name)}</div>
+      <div class="emp-info">
+        <div class="emp-name">${e.name}</div>
+        <div class="emp-dept">${e.pos} · ${e.dept}</div>
+      </div>
+      ${s ? `<span class="badge ${st.cls}" style="font-size:11px">${s.toFixed(1)}</span>` : ''}
+      <button class="btn-del" onclick="event.stopPropagation();removeEmp('${e.id}')" style="width:24px;height:24px;padding:0;font-size:15px;border:none">&#215;</button>
+    </div>`;
+  }).join('');
+}
+
+function renderEval() {
+  const emp = employees[activeId]; if (!emp) return;
+  const total = calcTotal(emp); const st = getStatus(total);
+  const d = DIMS[activeDim]; const dimScore = calcDim(emp, d);
+  const pct = Math.round((dimScore/5)*100);
+
+  document.getElementById('eval-content').innerHTML = `
+    <div class="final-box">
+      <div class="final-score" style="color:${total?st.color:'var(--text3)'}">${total?total.toFixed(2):'—'}</div>
+      <div>
+        <div style="font-size:15px;font-weight:500">${emp.name}</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${emp.pos} · ${emp.dept}</div>
+        ${total ? `<span class="badge ${st.cls}">${st.label}</span>` : '<span style="font-size:12px;color:var(--text2)">Isi penilaian untuk melihat hasil</span>'}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Ringkasan per dimensi</div>
+      <div class="radar-wrap">
+        ${DIMS.map(dd => {
+          const s = calcDim(emp, dd); const p = Math.round((s/5)*100);
+          return `<div class="radar-row">
+            <div class="radar-label">${dd.label}</div>
+            <div class="radar-bar"><div class="radar-fill" style="width:${p}%;background:${dd.color}"></div></div>
+            <div class="radar-val">${s?s.toFixed(1):'—'}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Penilaian per dimensi</div>
+      <div class="tabs">
+        ${DIMS.map((dd,i) => `<div class="tab ${i===activeDim?'active':''}" onclick="switchDim(${i})">${dd.label}</div>`).join('')}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="width:10px;height:10px;border-radius:50%;background:${d.color};flex-shrink:0"></div>
+        <span style="font-size:14px;font-weight:500">${d.label}</span>
+        <span style="font-size:12px;color:var(--text2);margin-left:auto">Bobot ${Math.round(d.weight*100)}%</span>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Skala: 1=Sangat Buruk · 2=Buruk · 3=Cukup · 4=Baik · 5=Sangat Baik</div>
+      <div style="overflow-x:auto">
+        <table class="ind-table">
+          <thead><tr>
+            <th style="width:40%">Indikator</th>
+            <th>Metode</th>
+            <th style="width:70px;text-align:center">Skor</th>
+            <th style="width:50px;text-align:center">Nilai</th>
+          </tr></thead>
+          <tbody>
+            ${d.indicators.map((ind,i) => {
+              const v = emp.scores?.[d.id]?.[i] || 0;
+              return `<tr>
+                <td><div class="ind-label">${ind.label}</div><div class="ind-sub">${ind.sub}</div></td>
+                <td><span class="method-pill">${ind.method}</span></td>
+                <td style="text-align:center">
+                  <select class="score-sel" onchange="setScore('${d.id}',${i},this.value)">
+                    ${SCORE_OPTS.map(o=>`<option value="${o.v}" ${v===o.v?'selected':''}>${o.l}</option>`).join('')}
+                  </select>
+                </td>
+                <td style="text-align:center">${scoreTag(v)}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="dim-footer">
+        <span style="font-size:12px;color:var(--text2)">Skor dimensi</span>
+        <div class="progress"><div class="progress-fill" style="width:${pct}%;background:${d.color}"></div></div>
+        <strong style="font-size:14px;min-width:36px;text-align:right">${dimScore?dimScore.toFixed(2):'—'}</strong>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Catatan evaluator</div>
+      <textarea id="note-area" rows="3" placeholder="Tuliskan catatan, konteks, atau rekomendasi...">${emp.note||''}</textarea>
+      <div class="btn-row">
+        <button onclick="saveNote()">Simpan catatan</button>
+        <span style="font-size:11px;color:var(--text3);align-self:center">Tersimpan otomatis ke Firebase</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderActivityLog() {
+  const el = document.getElementById('activity-log');
+  if (!activityLog.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:12px 0">Belum ada aktivitas</div>';
+    return;
+  }
+  el.innerHTML = activityLog.slice(0,10).map(a => `
+    <div class="log-item">
+      <div class="log-time">${fmtTs(a.ts)}</div>
+      <div class="log-msg">${a.msg}</div>
+    </div>`).join('');
+}
+
+function updateMetrics() {
+  const list = Object.values(employees);
+  document.getElementById('m-total').textContent = list.length;
+  const scored = list.filter(e => calcTotal(e) > 0);
+  document.getElementById('m-avg').textContent = scored.length ? (scored.reduce((a,e)=>a+calcTotal(e),0)/scored.length).toFixed(2) : '—';
+  document.getElementById('m-safe').textContent = list.filter(e => calcTotal(e) >= 3.5).length;
+  document.getElementById('m-risk').textContent = list.filter(e => { const s=calcTotal(e); return s>0&&s<2.5; }).length;
+}
+
+/* ── Toast ── */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+/* ── Export Excel ── */
+function exportExcel() {
+  const list = Object.values(employees);
+  if (!list.length) { showToast('Tidak ada data karyawan'); return; }
+  const wb = XLSX.utils.book_new();
+  const header = ['No','Nama','Jabatan','Departemen','Tgl Ditambahkan',
+    'Performa(20%)','Kompetensi(15%)','Tim(15%)','Disiplin(15%)','Potensi(15%)','Biaya(10%)','Senioritas(10%)',
+    'SKOR TOTAL','STATUS','Catatan'];
+  const rows = list.map((e,i) => {
+    const dims = DIMS.map(d => { const s=calcDim(e,d); return s?+s.toFixed(2):'-'; });
+    const total = calcTotal(e); const st = getStatus(total);
+    return [i+1, e.name, e.pos, e.dept, new Date(e.createdAt).toLocaleDateString('id-ID'),
+      ...dims, total?+total.toFixed(2):'-', st.label, e.note||''];
+  });
+  const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+  ws['!cols'] = [{wch:4},{wch:22},{wch:16},{wch:16},{wch:14},
+    ...DIMS.map(()=>({wch:13})),{wch:12},{wch:14},{wch:32}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Ringkasan');
+
+  list.forEach(e => {
+    const rows2 = [
+      ['Nama', e.name],['Jabatan', e.pos],['Departemen', e.dept],
+      ['Tgl Ditambahkan', new Date(e.createdAt).toLocaleDateString('id-ID')],
+      ['Skor Total', calcTotal(e)?calcTotal(e).toFixed(2):'-'],
+      ['Status', getStatus(calcTotal(e)).label],[''],
+    ];
+    DIMS.forEach(d => {
+      rows2.push([`== ${d.label} (Bobot ${Math.round(d.weight*100)}%) ==`, `Skor: ${calcDim(e,d)?calcDim(e,d).toFixed(2):'-'}`]);
+      rows2.push(['Indikator','Metode','Skor']);
+      d.indicators.forEach((ind,i) => rows2.push([ind.label, ind.method, e.scores?.[d.id]?.[i]||'-']));
+      rows2.push(['']);
+    });
+    if (e.note) rows2.push(['Catatan', e.note]);
+    const ws2 = XLSX.utils.aoa_to_sheet(rows2);
+    ws2['!cols'] = [{wch:36},{wch:16},{wch:8}];
+    XLSX.utils.book_append_sheet(wb, ws2, e.name.substring(0,28).replace(/[\\/\[\]*?:]/g,''));
+  });
+
+  XLSX.writeFile(wb, `Evaluasi_SDM_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('File Excel berhasil diunduh');
+}
+
+/* ── Export PDF ── */
+function exportPDF() {
+  const list = Object.values(employees);
+  if (!list.length) { showToast('Tidak ada data karyawan'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({orientation:'landscape', unit:'mm', format:'a4'});
+  const today = new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+
+  doc.setFontSize(16); doc.setFont('helvetica','bold');
+  doc.text('Laporan Evaluasi Multi-Dimensi SDM', 14, 18);
+  doc.setFontSize(10); doc.setFont('helvetica','normal');
+  doc.text(`Tanggal: ${today}   |   Total: ${list.length} karyawan`, 14, 26);
+  const scored = list.filter(e=>calcTotal(e)>0);
+  const avg = scored.length ? (scored.reduce((a,e)=>a+calcTotal(e),0)/scored.length).toFixed(2) : '—';
+  doc.text(`Rata-rata: ${avg}   |   Aman (≥3.5): ${list.filter(e=>calcTotal(e)>=3.5).length}   |   Risiko/Kritis (<2.5): ${list.filter(e=>{const s=calcTotal(e);return s>0&&s<2.5;}).length}`, 14, 32);
+
+  doc.autoTable({
+    head:[['No','Nama','Jabatan','Dept','Performa','Kompetensi','Tim','Disiplin','Potensi','Biaya','Senioritas','Total','Status']],
+    body: list.map((e,i) => {
+      const dims = DIMS.map(d => { const s=calcDim(e,d); return s?s.toFixed(1):'-'; });
+      const total = calcTotal(e); const st = getStatus(total);
+      return [i+1, e.name, e.pos, e.dept, ...dims, total?total.toFixed(2):'-', st.label];
+    }),
+    startY:38,
+    styles:{fontSize:8,cellPadding:2},
+    headStyles:{fillColor:[29,158,117],textColor:255,fontStyle:'bold'},
+    alternateRowStyles:{fillColor:[245,245,243]},
+    columnStyles:{0:{cellWidth:8},1:{cellWidth:26},2:{cellWidth:20},3:{cellWidth:20},11:{fontStyle:'bold'},12:{cellWidth:18}},
+  });
+
+  list.forEach(e => {
+    doc.addPage();
+    const total = calcTotal(e); const st = getStatus(total);
+    doc.setFontSize(14); doc.setFont('helvetica','bold');
+    doc.text(`Detail: ${e.name}`, 14, 18);
+    doc.setFontSize(10); doc.setFont('helvetica','normal');
+    doc.text(`${e.pos} · ${e.dept}   |   Skor: ${total?total.toFixed(2):'—'}   |   Status: ${st.label}`, 14, 26);
+
+    let y = 34;
+    DIMS.forEach(d => {
+      const s = calcDim(e, d);
+      doc.setFontSize(8);
+      doc.text(`${d.label} (${Math.round(d.weight*100)}%)`, 14, y);
+      doc.text(s?s.toFixed(2):'-', 122, y);
+      doc.setFillColor(230,230,230); doc.rect(60,y-3,57,3,'F');
+      if (s) { doc.setFillColor(29,158,117); doc.rect(60,y-3,(s/5)*57,3,'F'); }
+      y += 6;
+    });
+
+    const indBody = [];
+    DIMS.forEach(d => {
+      d.indicators.forEach((ind,i) => {
+        indBody.push([d.label, ind.label, ind.method, e.scores?.[d.id]?.[i]||'-']);
+      });
+    });
+    doc.autoTable({
+      head:[['Dimensi','Indikator','Metode','Skor']],
+      body: indBody, startY: y+4,
+      styles:{fontSize:7,cellPadding:2},
+      headStyles:{fillColor:[83,74,183],textColor:255,fontStyle:'bold'},
+      alternateRowStyles:{fillColor:[245,245,243]},
+      columnStyles:{0:{cellWidth:34},1:{cellWidth:80},2:{cellWidth:30},3:{cellWidth:14,halign:'center'}},
+    });
+
+    if (e.note) {
+      const fy = doc.lastAutoTable.finalY + 6;
+      doc.setFontSize(9); doc.setFont('helvetica','bold');
+      doc.text('Catatan:', 14, fy);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8);
+      doc.text(doc.splitTextToSize(e.note, 250), 14, fy+5);
+    }
+  });
+
+  doc.save(`Evaluasi_SDM_${new Date().toISOString().slice(0,10)}.pdf`);
+  showToast('File PDF berhasil diunduh');
+}
+
+/* ── Auto-load saved config ── */
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('fb_cfg');
+  if (saved) {
+    try {
+      const cfg = JSON.parse(saved);
+      document.getElementById('cfg-apiKey').value    = cfg.apiKey || '';
+      document.getElementById('cfg-authDomain').value = cfg.authDomain || '';
+      document.getElementById('cfg-dbUrl').value      = cfg.databaseURL || '';
+      document.getElementById('cfg-projectId').value  = cfg.projectId || '';
+      document.getElementById('cfg-appId').value      = cfg.appId || '';
+      initFirebase();
+    } catch(e) { /* ignore */ }
+  }
+});
+</script>
+</body>
+</html>
