@@ -793,18 +793,7 @@ function exportPDF() {
 
 /* ── Auto-load saved config ── */
 window.addEventListener('load', () => {
-  const saved = localStorage.getItem('fb_cfg');
-  if (saved) {
-    try {
-      const cfg = JSON.parse(saved);
-      document.getElementById('cfg-apiKey').value    = cfg.apiKey || '';
-      document.getElementById('cfg-authDomain').value = cfg.authDomain || '';
-      document.getElementById('cfg-dbUrl').value      = cfg.databaseURL || '';
-      document.getElementById('cfg-projectId').value  = cfg.projectId || '';
-      document.getElementById('cfg-appId').value      = cfg.appId || '';
-      initFirebase();
-    } catch(e) { /* ignore */ }
-  }
+  initFirebase();
 });
 </script>
 </body>
