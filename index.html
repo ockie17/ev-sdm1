@@ -369,7 +369,15 @@ let activityLog = [];
 
 /* ── Firebase init ── */
 function initFirebase() {
-  const firebaseConfig = {
+  // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
   apiKey: "AIzaSyBT290N5dMPfU6FsihpeNTyUAVCizgmNu0",
   authDomain: "evaluasi-sdm.firebaseapp.com",
   databaseURL: "https://evaluasi-sdm-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -378,6 +386,11 @@ function initFirebase() {
   messagingSenderId: "327869984090",
   appId: "1:327869984090:web:34eb139b25c4cd29d01763",
   measurementId: "G-QF35FLGD9N"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 };
   const missing = Object.entries(cfg).filter(([,v])=>!v);
   if (missing.length) { showCfgError('Semua field wajib diisi.'); return; }
