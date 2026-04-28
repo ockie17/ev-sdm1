@@ -369,13 +369,16 @@ let activityLog = [];
 
 /* ── Firebase init ── */
 function initFirebase() {
-  const cfg = {
-    apiKey:      document.getElementById('cfg-apiKey').value.trim(),
-    authDomain:  document.getElementById('cfg-authDomain').value.trim(),
-    databaseURL: document.getElementById('cfg-dbUrl').value.trim(),
-    projectId:   document.getElementById('cfg-projectId').value.trim(),
-    appId:       document.getElementById('cfg-appId').value.trim(),
-  };
+  const firebaseConfig = {
+  apiKey: "AIzaSyBT290N5dMPfU6FsihpeNTyUAVCizgmNu0",
+  authDomain: "evaluasi-sdm.firebaseapp.com",
+  databaseURL: "https://evaluasi-sdm-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "evaluasi-sdm",
+  storageBucket: "evaluasi-sdm.firebasestorage.app",
+  messagingSenderId: "327869984090",
+  appId: "1:327869984090:web:34eb139b25c4cd29d01763",
+  measurementId: "G-QF35FLGD9N"
+};
   const missing = Object.entries(cfg).filter(([,v])=>!v);
   if (missing.length) { showCfgError('Semua field wajib diisi.'); return; }
 
