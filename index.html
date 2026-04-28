@@ -182,57 +182,6 @@ button.btn-del:hover{background:var(--red-bg);}
 </head>
 <body>
 
-<!-- ══════════════ SETUP OVERLAY ══════════════ -->
-<div id="setup-overlay">
-  <div class="setup-card">
-    <h2>Konfigurasi Firebase</h2>
-    <p>Masukkan konfigurasi Firebase project Anda. Data evaluasi akan tersimpan di Realtime Database dan dapat diakses oleh semua pengguna secara realtime.</p>
-
-    <div class="setup-steps">
-      <div class="setup-step">
-        <div class="step-num">1</div>
-        <div class="step-body">Buka <a class="step-link" href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → klik <strong>Add project</strong> → beri nama project → klik Continue hingga selesai.</div>
-      </div>
-      <div class="setup-step">
-        <div class="step-num">2</div>
-        <div class="step-body">Di sidebar kiri klik <strong>Build → Realtime Database</strong> → klik <strong>Create Database</strong> → pilih lokasi → pilih <strong>Start in test mode</strong> → Enable.</div>
-      </div>
-      <div class="setup-step">
-        <div class="step-num">3</div>
-        <div class="step-body">Klik ikon roda gigi (⚙️) → <strong>Project settings</strong> → scroll ke bawah → klik ikon <code>&lt;/&gt;</code> → Register app → salin nilai dari <code>firebaseConfig</code>.</div>
-      </div>
-      <div class="setup-step">
-        <div class="step-num">4</div>
-        <div class="step-body">Tempelkan nilai konfigurasi ke kolom di bawah ini, lalu klik Simpan & Mulai.</div>
-      </div>
-    </div>
-
-    <div class="field-group">
-      <label>API Key</label>
-      <input type="text" id="cfg-apiKey" placeholder="AIzaSy..."/>
-    </div>
-    <div class="field-group">
-      <label>Auth Domain</label>
-      <input type="text" id="cfg-authDomain" placeholder="yourproject.firebaseapp.com"/>
-    </div>
-    <div class="field-group">
-      <label>Database URL</label>
-      <input type="text" id="cfg-dbUrl" placeholder="https://yourproject-default-rtdb.firebaseio.com"/>
-    </div>
-    <div class="field-group">
-      <label>Project ID</label>
-      <input type="text" id="cfg-projectId" placeholder="yourproject"/>
-    </div>
-    <div class="field-group">
-      <label>App ID</label>
-      <input type="text" id="cfg-appId" placeholder="1:123456789:web:abc123"/>
-    </div>
-    <div id="cfg-error" class="setup-error">Gagal terhubung ke Firebase. Periksa kembali konfigurasi Anda.</div>
-    <button class="btn-primary" onclick="initFirebase()">Simpan & Mulai &#8594;</button>
-    <p style="font-size:11px;color:var(--text3);margin-top:12px;text-align:center;">Konfigurasi disimpan di browser (localStorage) sehingga tidak perlu diisi ulang.</p>
-  </div>
-</div>
-
 <!-- ══════════════ HEADER ══════════════ -->
 <div class="header">
   <div class="header-left">
