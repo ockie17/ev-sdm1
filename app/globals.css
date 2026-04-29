@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@layer base {
+  :root {
+    --background: 0 0% 8%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 98%;
+    --primary: 187 100% 50%;
+    --primary-foreground: 0 0% 8%;
+    --secondary: 265 100% 62%;
+    --secondary-foreground: 0 0% 8%;
+    --accent: 187 100% 50%;
+    --muted: 0 0% 40%;
+    --muted-foreground: 0 0% 75%;
+    --border: 0 0% 20%;
+    --radius: 0.5rem;
+  }
+
+  html {
+    @apply bg-background text-foreground;
+  }
+
+  body {
+    @apply bg-background;
+  }
+
+  * {
+    @apply border-border;
+  }
+}
+
+@layer components {
+  .dashboard-grid {
+    @apply grid auto-rows-max gap-4;
+  }
+
+  .chart-card {
+    @apply rounded-lg bg-card p-6 border border-border;
+  }
+
+  .btn-primary {
+    @apply px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 rounded-lg border border-primary text-primary font-medium hover:bg-primary/10 transition-colors;
+  }
+}
