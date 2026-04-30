@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { UserPlus } from 'lucide-react'
+import { BarChart3, Loader2, CheckCircle2 } from 'lucide-react'
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('')
@@ -46,21 +46,38 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-card rounded-lg border border-border p-8">
-          <div className="flex items-center gap-2 mb-6">
-            <UserPlus className="w-6 h-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">DataViz</h1>
+    <div className="min-h-screen bg-background grid-bg flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Gradient orbs */}
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[hsl(270,100%,65%)] rounded-full blur-[128px] opacity-20 pointer-events-none" />
+      <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-[hsl(150,100%,50%)] rounded-full blur-[128px] opacity-10 pointer-events-none" />
+      
+      <div className="w-full max-w-md relative">
+        <div className="glass-card p-8">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[hsl(270,100%,65%)] to-[hsl(280,100%,55%)] flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-foreground">DataViz</span>
+          </Link>
+
+          <h1 className="text-2xl font-bold text-foreground mb-2">Create your account</h1>
+          <p className="text-muted-foreground mb-8">Start your free trial today</p>
+
+          {/* Benefits */}
+          <div className="flex flex-wrap gap-3 mb-8">
+            {['14-day free trial', 'No credit card required', 'Cancel anytime'].map((benefit) => (
+              <div key={benefit} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[hsl(150,100%,50%)]" />
+                {benefit}
+              </div>
+            ))}
           </div>
 
-          <h2 className="text-xl font-semibold text-foreground mb-2">Create account</h2>
-          <p className="text-muted-foreground mb-6">Join to start analyzing your data</p>
-
-          <form onSubmit={handleSignUp} className="space-y-4">
+          <form onSubmit={handleSignUp} className="space-y-5">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                Email
+                Email address
               </label>
               <input
                 id="email"
@@ -69,7 +86,7 @@ export default function SignUpPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                className="input-futuristic"
               />
             </div>
 
@@ -80,29 +97,31 @@ export default function SignUpPage() {
               <input
                 id="password"
                 type="password"
+                placeholder="Create a strong password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                className="input-futuristic"
               />
             </div>
 
             <div>
               <label htmlFor="repeat-password" className="block text-sm font-medium text-foreground mb-2">
-                Confirm Password
+                Confirm password
               </label>
               <input
                 id="repeat-password"
                 type="password"
+                placeholder="Repeat your password"
                 required
                 value={repeatPassword}
                 onChange={(e) => setRepeatPassword(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:border-primary transition-colors"
+                className="input-futuristic"
               />
             </div>
 
             {error && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+              <div className="p-3 rounded-lg bg-[hsla(0,85%,60%,0.1)] border border-[hsla(0,85%,60%,0.3)] text-[hsl(0,85%,65%)] text-sm">
                 {error}
               </div>
             )}
@@ -110,19 +129,30 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full px-4 py-2 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary w-full flex items-center justify-center gap-2 py-2.5"
             >
-              {isLoading ? 'Creating account...' : 'Sign up'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                'Create account'
+              )}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-muted-foreground">
+          <div className="mt-8 text-center text-sm text-muted-foreground">
             Already have an account?{' '}
-            <Link href="/auth/login" className="text-primary hover:underline font-medium">
+            <Link href="/auth/login" className="text-[hsl(270,100%,65%)] hover:underline font-medium">
               Sign in
             </Link>
           </div>
         </div>
+
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          By creating an account, you agree to our Terms of Service and Privacy Policy
+        </p>
       </div>
     </div>
   )
