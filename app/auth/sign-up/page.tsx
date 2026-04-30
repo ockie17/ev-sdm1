@@ -53,7 +53,7 @@ export default function SignUpPage() {
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[hsl(270,100%,65%)] to-[hsl(280,100%,55%)] flex items-center justify-center">
               <BarChart3 className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-foreground">DataViz</span>
+            <span className="text-xl font-bold text-foreground">OQviz</span>
           </Link>
 
           <h1 className="text-2xl font-bold text-foreground mb-2">Create your account</h1>

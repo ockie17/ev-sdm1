@@ -1,4 +1,4 @@
-# DataViz - Analytics SaaS Platform
+# OQviz - Analytics SaaS Platform
 
 A modern analytics and reporting platform built with Next.js 16, Supabase, and Stripe.
 

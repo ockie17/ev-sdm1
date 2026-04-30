@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
 
 export const metadata: Metadata = {
-  title: 'DataViz - Analytics for Teams',
+  title: 'OQviz - Analytics for Teams',
   description: 'Real-time analytics and reporting platform for small teams',
   icons: {
     icon: '/icon.svg',

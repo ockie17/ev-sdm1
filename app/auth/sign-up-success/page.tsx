@@ -65,7 +65,7 @@ export default function SignUpSuccessPage() {
           <div className="w-6 h-6 rounded bg-gradient-to-br from-[hsl(270,100%,65%)] to-[hsl(280,100%,55%)] flex items-center justify-center">
             <BarChart3 className="w-3 h-3 text-white" />
           </div>
-          <span className="text-sm font-medium text-muted-foreground">DataViz</span>
+          <span className="text-sm font-medium text-muted-foreground">OQviz</span>
         </div>
       </div>
     </div>
