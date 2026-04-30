@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get or create Stripe customer
-    let { data: team, error: teamError } = await supabase
+    let { data: team } = await supabase
       .from('teams')
       .select('stripe_customer_id')
       .eq('created_by', user.id)
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       // Create new Stripe customer
       const stripe = await import('stripe')
       const stripeClient = new stripe.default(process.env.STRIPE_SECRET_KEY || '', {
-        apiVersion: '2024-11-20',
+        apiVersion: '2025-02-24.acacia',
       })
 
       const customer = await stripeClient.customers.create({

@@ -21,7 +21,7 @@ export default function BillingPage() {
   const [user, setUser] = useState<any>(null)
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null)
   const [upgrading, setUpgrading] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+  const [selectedPlan] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
 

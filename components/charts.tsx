@@ -134,7 +134,7 @@ export function BarChartComponent({ data, title, description, dataKey, color = '
   )
 }
 
-export function PieChartComponent({ data, title, description, nameKey, valueKey, loading }: PieChartProps) {
+export function PieChartComponent({ data, title, description, valueKey, loading }: PieChartProps) {
   if (loading) {
     return <ChartSkeleton title={title} />
   }

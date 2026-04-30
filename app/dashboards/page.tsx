@@ -10,7 +10,7 @@ import { BarChart3, Plus } from 'lucide-react'
 export default function DashboardsPage() {
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<any>(null)
-  const [dashboards, setDashboards] = useState<any[]>([])
+  const [dashboards] = useState<any[]>([])
   const router = useRouter()
   const supabase = createClient()
 

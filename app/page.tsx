@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { CheckCircle2, BarChart3, Zap, Database, Bell, Users, ArrowRight, Sparkles } from 'lucide-react'
+import { CheckCircle2, BarChart3, Database, Bell, Users, ArrowRight, Sparkles } from 'lucide-react'
 
 export default function LandingPage() {
   return (
