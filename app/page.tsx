@@ -243,7 +243,7 @@ export default function LandingPage() {
               <Link href="#" className="hover:text-foreground transition-colors">Terms</Link>
               <Link href="#" className="hover:text-foreground transition-colors">Documentation</Link>
             </div>
-            <p className="text-sm text-muted-foreground">2026 DataViz. All rights reserved.</p>
+            <p className="text-sm text-muted-foreground">2026 OQviz. All rights reserved.</p>
           </div>
         </div>
       </footer>
