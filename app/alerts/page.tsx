@@ -1,10 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useState } from 'react'
 import { AppHeader } from '@/components/app-header'
 import { AlertManager } from '@/components/alert-manager'
+import { Bell } from 'lucide-react'
 
 interface Alert {
   id: string
@@ -17,45 +16,23 @@ interface Alert {
 }
 
 export default function AlertsPage() {
-  const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
   const [alerts, setAlerts] = useState<Alert[]>([])
-  const router = useRouter()
-  const supabase = createClient()
-
-  useEffect(() => {
-    async function checkAuth() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/auth/login')
-      } else {
-        setUser(user)
-      }
-      setLoading(false)
-    }
-    checkAuth()
-  }, [router, supabase.auth])
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-  }
 
   const handleAddAlert = (newAlert: Alert) => {
     setAlerts([...alerts, newAlert])
-    // TODO: Save to database
   }
 
   const handleDeleteAlert = (id: string) => {
     setAlerts(alerts.filter(alert => alert.id !== id))
-    // TODO: Delete from database
   }
 
-  if (loading) return null
+  const handleLogout = () => {
+    // Logout logic
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      <AppHeader userEmail={user?.email} onLogout={handleLogout} />
+      <AppHeader userEmail="user@example.com" onLogout={handleLogout} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
@@ -63,11 +40,20 @@ export default function AlertsPage() {
           <p className="text-muted-foreground mt-1">Monitor your metrics and get notified when thresholds are exceeded</p>
         </div>
 
-        <AlertManager 
-          alerts={alerts}
-          onAddAlert={handleAddAlert}
-          onDeleteAlert={handleDeleteAlert}
-        />
+        {alerts.length === 0 ? (
+          <div className="chart-card border-2 border-dashed border-border p-12 text-center">
+            <Bell className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold text-foreground mb-2">No alerts set up yet</h2>
+            <p className="text-muted-foreground mb-6">Create alerts to get notified of important metric changes</p>
+            <button className="btn-primary">Create Alert</button>
+          </div>
+        ) : (
+          <AlertManager 
+            alerts={alerts}
+            onAddAlert={handleAddAlert}
+            onDeleteAlert={handleDeleteAlert}
+          />
+        )}
       </main>
     </div>
   )

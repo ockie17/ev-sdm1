@@ -155,7 +155,7 @@ export function PieChartComponent({ data, title, description, valueKey, loading 
             fill="#8884d8"
             dataKey={valueKey}
           >
-            {data.map((entry, index) => (
+            {data.map((_, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>

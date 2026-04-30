@@ -1,12 +1,18 @@
 import Stripe from 'stripe'
 import { createClient } from '@/lib/supabase/server'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20',
-})
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not set')
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-02-24.acacia',
+  })
+}
 
 export async function createStripeCustomer(userId: string, email: string) {
   try {
+    const stripe = getStripe()
     const customer = await stripe.customers.create({
       email,
       metadata: {
@@ -35,6 +41,7 @@ export async function createCheckoutSession(
   userId: string
 ) {
   try {
+    const stripe = getStripe()
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
@@ -60,6 +67,7 @@ export async function createCheckoutSession(
 
 export async function getCustomerPortalUrl(customerId: string) {
   try {
+    const stripe = getStripe()
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${process.env.NEXT_PUBLIC_APP_URL}/settings/billing`,
@@ -74,6 +82,7 @@ export async function getCustomerPortalUrl(customerId: string) {
 
 export async function getSubscriptionStatus(customerId: string) {
   try {
+    const stripe = getStripe()
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       limit: 1,

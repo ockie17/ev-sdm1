@@ -1,31 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { useState } from 'react'
 import { Settings, Users } from 'lucide-react'
 
 export default function SettingsPage() {
-  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('general')
-  const [user, setUser] = useState<any>(null)
-  const router = useRouter()
-  const supabase = createClient()
-
-  useEffect(() => {
-    async function checkAuth() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/auth/login')
-      } else {
-        setUser(user)
-      }
-      setLoading(false)
-    }
-    checkAuth()
-  }, [router, supabase.auth])
-
-  if (loading) return null
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -71,7 +50,7 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium text-foreground mb-2">Email</label>
                 <input
                   type="email"
-                  value={user?.email || ''}
+                  value="user@example.com"
                   disabled
                   className="w-full px-4 py-2 rounded-lg bg-border text-muted-foreground"
                 />
