@@ -220,7 +220,7 @@ export default function LandingPage() {
         <div className="glass-card p-12 md:p-16 text-center relative overflow-hidden">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-[hsl(270,100%,65%)] rounded-full blur-[128px] opacity-20 pointer-events-none" />
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground relative">Ready to transform your data?</h2>
-          <p className="text-xl text-muted-foreground mb-8 relative">Join thousands of teams already using DataViz</p>
+          <p className="text-xl text-muted-foreground mb-8 relative">Join thousands of teams already using OQviz</p>
           <Link href="/auth/sign-up" className="btn-primary inline-flex items-center gap-2 text-base px-8 py-3 relative group">
             Start Your Free Trial
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -236,7 +236,7 @@ export default function LandingPage() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[hsl(270,100%,65%)] to-[hsl(280,100%,55%)] flex items-center justify-center">
                 <BarChart3 className="w-4 h-4 text-white" />
               </div>
-              <span className="font-bold text-foreground">DataViz</span>
+              <span className="font-bold text-foreground">OQviz</span>
             </div>
             <div className="flex items-center gap-8 text-sm text-muted-foreground">
               <Link href="#" className="hover:text-foreground transition-colors">Privacy</Link>
